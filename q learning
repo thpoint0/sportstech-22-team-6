@@ -1,0 +1,45 @@
+# assuming we have a user population dataset
+# then we can use this code to learn what kind policy can generate the best outcome
+# we should 
+
+import numpy
+import d3rlpy
+df = pd.read_csv('multi_state&movement&score.csv', index_col=False)
+df2 = df.loc[:100,:100] #select the state
+df3 = df.loc[:100,101:150] #select the action
+df4 = df.loc[:100,151] #select the reward
+df5 = df.loc[:100,'flag'] #ensure the episode
+
+observations = np.arry(df2)
+
+actions = list(np.array(df3).flatten())
+actions = np.array(actions)
+
+rewards = list(np.array(df4).flatten())
+rewards = np.array(rewards)
+
+terminals = list(np.array(df5).flatten())
+terminals = np.array(terminals)
+
+datasets = d3rlpy.dataset.MDPDataset(
+  observations = observations,
+  actions = actions,
+  rewards = rewards,
+  terminals = terminals,
+  discrete_action = True,
+)
+
+from d3rlpy.algos import DiscreteCQL
+from d3rlpy.metrics.scorer import discounted_sum_of_advantage_scorer
+from d3rlpy.metrics.scorer import evaluate_on_environment
+from d3rlpy.metrics.scorer import td_error_scorer
+from d3rlpy.metrics.scorer import average_value_estimation_scorer
+from sklearn.model_selection import train_test_split
+
+cql = DiscreteCQL(use_gpu=False)
+
+cql.fit(datasets,
+        eval_episodes=datasets.episodes,
+        n_steps=1000000,
+        n_steps_per_epoch=100,
+)
